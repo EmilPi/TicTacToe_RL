@@ -72,7 +72,7 @@ class TicTacToe():
             self.state = self.play_move(learn=True)
             self.state = self.play_move(learn=True)
 
-            if i% 500 == 0:
+            if i % 500 == 0:
                 self.print_bar()
                 print('-------------------')
                 self.player1.print_value = True
@@ -94,14 +94,14 @@ class TicTacToe():
     def play_move(self, learn=False):
 
         if self.turn == 'X':
-            if learn is True:
+            if learn:
                 new_state = self.player1.make_move_and_learn(self.state, self.winner)
             else:
                 new_state = self.player1.make_move(self.state, self.winner)
             self.turn = 'O'
             self.player_turn = self.player2
         else:
-            if learn is True:
+            if learn:
                 new_state = self.player2.make_move_and_learn(self.state, self.winner)
             else:
                 new_state = self.player2.make_move(self.state, self.winner)
@@ -176,9 +176,9 @@ class TicTacToe():
         c = self.Ocount
         d = self.all_count
 
-        aprec = 100*a / (a + b + c + 1)
-        bprec = 100*b / (a + b + c + 1)
-        cprec = 100*c / (a + b + c + 1)
+        aprec = 100 * a / (a + b + c + 1)
+        bprec = 100 * b / (a + b + c + 1)
+        cprec = 100 * c / (a + b + c + 1)
 
         ax1.clear()
         ax2.clear()
@@ -196,16 +196,16 @@ class TicTacToe():
         for rect in bar2:
             height = rect.get_height()
             ax2.text(rect.get_x() + rect.get_width() / 2., 1.05 * height,
-                    '%d' % int(height),
-                    ha='center', va='bottom')
+                     '%d' % int(height),
+                     ha='center', va='bottom')
 
         plt.draw()
 
         plt.pause(0.05)
 
     def print_summary(self):
-        a = ['X',   self.Xcount, 100 * self.Xcount / (self.Xcount + self.Ocount + self.Tcount)]
-        b = ['O',   self.Ocount, 100 * self.Ocount / (self.Xcount + self.Ocount + self.Tcount)]
+        a = ['X', self.Xcount, 100 * self.Xcount / (self.Xcount + self.Ocount + self.Tcount)]
+        b = ['O', self.Ocount, 100 * self.Ocount / (self.Xcount + self.Ocount + self.Tcount)]
         c = ['Tie', self.Tcount, 100 * self.Tcount / (self.Xcount + self.Ocount + self.Tcount)]
         tab = tabulate([a, b, c], headers=['Player', 'num of wins', 'prec'])
         print(tab)
@@ -350,7 +350,7 @@ class QAgent(Agent):
             else:
                 v_s_tag = int(0)
 
-            self.values[self.prev_state] = v_s + self.alpha*(R + v_s_tag - v_s)
+            self.values[self.prev_state] = v_s + self.alpha * (R + v_s_tag - v_s)
 
         self.prev_state = state
 
