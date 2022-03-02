@@ -346,7 +346,7 @@ class QAgent(Agent):
             R = self.reward(winner)
 
             if self.state in self.values.keys() and winner is None:
-                v_s_tag = self.values[state]
+                v_s_tag = self.values[self.state]
             else:
                 v_s_tag = int(0)
 
