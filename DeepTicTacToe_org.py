@@ -9,11 +9,47 @@ import keras.models as Km
 import numpy as np
 import matplotlib.pyplot as plt
 
+BOARD_ROWS = BOARD_COLS = 3
+WINNING_LENGTH = 3
+
+
+def get_winning_diagonals():
+    sub_board_diagonals = []
+    # horizontal
+    for i in range(WINNING_LENGTH):
+        sub_board_diagonals.append([ridx_cidx_to_idx(i, j) for j in range(WINNING_LENGTH)])
+    # vertical
+    for i in range(WINNING_LENGTH):
+        sub_board_diagonals.append([ridx_cidx_to_idx(j, i) for j in range(WINNING_LENGTH)])
+    # diagonal
+    sub_board_diagonals.append([ridx_cidx_to_idx(i, i) for i in range(WINNING_LENGTH)])
+    sub_board_diagonals.append([ridx_cidx_to_idx(WINNING_LENGTH - i - 1, i) for i in range(WINNING_LENGTH)])
+    winning_diagonals = []
+    for sub_square_top_row_idx in range(BOARD_ROWS - WINNING_LENGTH + 1):
+        for sub_square_left_col_idx in range(BOARD_COLS - WINNING_LENGTH + 1):
+            for sub_diagonal in sub_board_diagonals:
+                diagonal = []
+                for sub_idx in sub_diagonal:
+                    ridx, cidx = idx_to_ridx_cidx(sub_idx)
+                    ridx += sub_square_top_row_idx
+                    cidx += sub_square_left_col_idx
+                    diagonal.append(ridx_cidx_to_idx(ridx, cidx))
+                winning_diagonals.append(diagonal)
+    return winning_diagonals
+
+
+def ridx_cidx_to_idx(ridx, cidx):
+    return BOARD_COLS * ridx + cidx
+
+
+def idx_to_ridx_cidx(idx):
+    return idx // BOARD_COLS, idx % BOARD_COLS
+
 
 class TicTacToe():
 
     def __init__(self, player1, player2, exp1=1, exp2=1):
-        self.state = '123456789'
+        self.state = '-' * BOARD_COLS * BOARD_ROWS
 
         player1 = globals()[player1]
         self.player1 = player1(tag='X', exploration_factor=exp1)
@@ -28,6 +64,8 @@ class TicTacToe():
         self.Ocount = 0
         self.Tcount = 0
         self.all_count = 0
+
+        self.winning_diagonals = None
 
     def play_game(self):
 
@@ -113,26 +151,31 @@ class TicTacToe():
 
         s = list(self.state)
 
-        print('    {} | {} | {}'.format(s[0], s[1], s[2]))
-        print('  --------------')
-        print('    {} | {} | {}'.format(s[3], s[4], s[5]))
-        print('  --------------')
-        print('    {} | {} | {}'.format(s[6], s[7], s[8]))
-        print('  --------------')
-        print('  --------------')
+        for ridx in range(BOARD_ROWS):
+            print(('    ' + ' | '.join(['{}'] * BOARD_COLS)).format(
+                *s[
+                 ridx_cidx_to_idx(ridx, 0): ridx_cidx_to_idx(ridx + 1, 0)
+                 ]
+            ))
+            print('  -' + 4 * BOARD_COLS * '-')
+
+    def get_winning_diagonals(self):
+        if not self.winning_diagonals:
+            self.winning_diagonals = get_winning_diagonals()
+        return self.winning_diagonals
 
     def game_winner(self):
 
-        winner = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
+        winner = self.get_winning_diagonals()
         for line in winner:
-            s = self.state[line[0]] + self.state[line[1]] + self.state[line[2]]
-            if s == 'XXX':
+            s = ''.join([self.state[idx] for idx in line])
+            if s == 'X' * WINNING_LENGTH:
                 self.winner = 'X'
                 break
-            elif s == 'OOO':
+            elif s == 'O' * WINNING_LENGTH:
                 self.winner = 'O'
                 break
-            elif not any(s.isnumeric() for s in list(self.state)):
+            elif not any(s == '-' for s in list(self.state)):
                 self.winner = 'No winner'
         self.check_winner()
         return self.winner
@@ -158,7 +201,7 @@ class TicTacToe():
             # self.print_game()
 
     def init_game(self):
-        self.state = '123456789'
+        self.state = '-' * BOARD_COLS * BOARD_ROWS
         self.winner = None
         self.turn = 'X'
         self.player_turn = self.player1
@@ -219,8 +262,10 @@ class Player():
         self.exp_factor = exploration_factor
 
     def make_move(self, state, winner):
-        idx = int(input('Choose move number: '))
-        s = state[:idx-1] + self.tag + state[idx:]
+        move_str = input('Choose move number (e.g. 1,2): ')
+        row, col = [int(_) for _ in move_str.split(',')]
+        idx = ridx_cidx_to_idx(row, col)
+        s = state[:idx] + self.tag + state[idx + 1:]
         return s
 
 
@@ -230,7 +275,7 @@ class Agent(Player):
         super().__init__(tag, exploration_factor)
         self.epsilon = 0.1
         self.alpha = 0.5
-        self.prev_state = '123456789'
+        self.prev_state = '-' * BOARD_COLS * BOARD_ROWS
         self.state = None
         self.print_value = False
 
@@ -259,7 +304,7 @@ class Agent(Player):
         if p < self.exp_factor:
             new_state = self.make_optimal_move(state)
         else:
-            moves = [s for s, v in enumerate(state) if v.isnumeric()]
+            moves = [s for s, v in enumerate(state) if v == '-']
             idx = random.choice(moves)
             new_state = state[:idx] + self.tag + state[idx + 1:]
 
@@ -272,7 +317,7 @@ class Agent(Player):
         return self.make_move(state, winner)
 
     def make_optimal_move(self, state):
-        moves = [s for s, v in enumerate(state) if v.isnumeric()]
+        moves = [s for s, v in enumerate(state) if v == '-']
 
         if len(moves) == 1:
             temp_state = state[:moves[0]] + self.tag + state[moves[0] + 1:]
@@ -287,7 +332,7 @@ class Agent(Player):
             v_temp = []
             temp_state = state[:idx] + self.tag + state[idx + 1:]
 
-            moves_op = [s for s, v in enumerate(temp_state) if v.isnumeric()]
+            moves_op = [s for s, v in enumerate(temp_state) if v == '-']
             for idy in moves_op:
                 temp_state_op = temp_state[:idy] + self.op_tag + temp_state[idy + 1:]
                 v_temp.append(self.calc_value(temp_state_op))
@@ -419,7 +464,7 @@ class DeepAgent(Agent):
         else:
             print('new model')
             model = Km.Sequential()
-            model.add(Kl.Dense(18, activation='relu', input_dim=9))
+            model.add(Kl.Dense(2 * BOARD_ROWS * BOARD_COLS, activation='relu', input_dim=BOARD_ROWS * BOARD_COLS))
             model.add(Kl.Dense(18, activation='relu'))
             model.add(Kl.Dense(1, activation='linear'))
             model.compile(optimizer='adam', loss='mean_absolute_error', metrics=['accuracy'])
