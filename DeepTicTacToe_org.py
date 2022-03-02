@@ -9,6 +9,14 @@ import keras.models as Km
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--just-play', action='store_true',
+                    help='If you want to skip training and start playing immediately.')
+parser.add_argument('--print-interval', type=int, default=10,
+                    help='How often (each how much episodes) print training state.')
+parser.add_argument('--dump-interval', type=int, default=10,
+                    help='How often (each how much episodes) dump network weights.')
 
 BOARD_ROWS = BOARD_COLS = 3
 WINNING_LENGTH = 3
@@ -121,12 +129,15 @@ class TicTacToe():
             self.state = self.play_move(learn=True)
             self.state = self.play_move(learn=True)
 
-            if i % 500 == 0:
+            if i % args.print_interval == 0:
                 self.print_bar()
                 print('-------------------')
                 self.player1.print_value = True
             else:
                 self.player1.print_value = False
+            if i % args.dump_interval == 0:
+                self.player1.save_values()
+                self.player2.save_values()
 
             if i % 2000 == 0:
                 self.Xcount = 0
@@ -519,16 +530,19 @@ class DeepAgent(Agent):
         self.value_model.save(s)
 
 
-def check_player():
-    # print('QAgent X 1 and QAgent 1 0')
-    # game = TicTacToe('QAgent', 'QAgent', 1, 0)
-    # game.play_to_learn(1000)
-    # print('DeepAgent X 0.8 and DeepAgent 0.8')
-    # game = TicTacToe('DeepAgent', 'DeepAgent', 0.8, 0.8)
-    # game.play_to_learn(30000)
-    print('DeepAgent X 0 and QAgent 1, 0')
+if __name__ == '__main__':
+    args = parser.parse_args()
+    if not args.just_play:
+        print('QAgent X 1 and QAgent 1 0')
+        game = TicTacToe('QAgent', 'QAgent', 1, 0)
+        game.play_to_learn(1000)
+        print('DeepAgent X 0.8 and DeepAgent 0.8')
+        game = TicTacToe('DeepAgent', 'DeepAgent', 0.8, 0.8)
+        game.play_to_learn(30)
+        print('DeepAgent X 0 and QAgent 1, 0')
+        game = TicTacToe('DeepAgent', 'QAgent', 0.8, 1)
+        game.play_to_learn(30)
+    game = TicTacToe('Player', 'QAgent', 0.8, 0.8)
+    game.play_game()
     game = TicTacToe('Player', 'DeepAgent', 0.8, 0.8)
     game.play_game()
-
-
-check_player()
