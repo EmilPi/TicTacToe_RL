@@ -425,8 +425,12 @@ class QAgent(Agent):
         if state in self.values.keys():
             return self.values[state]
 
+    @property
+    def name(self):
+        return f'Q_values_{self.tag}_{BOARD_ROWS}_{BOARD_COLS}_{WINNING_LENGTH}'
+
     def load_values(self):
-        s = 'values' + self.tag + '.csv'
+        s = self.name + '.csv'
         try:
             value_csv = csv.reader(open(s, 'r'))
             for row in value_csv:
@@ -437,7 +441,7 @@ class QAgent(Agent):
         # print(self.values)
 
     def save_values(self):
-        s = 'values' + self.tag + '.csv'
+        s = self.name + '.csv'
         try:
             os.remove(s)
         except:
@@ -477,8 +481,12 @@ class DeepAgent(Agent):
 
         self.prev_state = state
 
+    @property
+    def name(self):
+        return f'D_values_{self.tag}_{BOARD_ROWS}_{BOARD_COLS}_{WINNING_LENGTH}'
+
     def load_model(self):
-        s = 'model_values' + self.tag + '.h5'
+        s = self.name + '.h5'
         model_file = Path(s)
         if model_file.is_file():
             model = Km.load_model(s)
@@ -522,7 +530,7 @@ class DeepAgent(Agent):
             self.value_model.fit(X_train, target, epochs=epochs, verbose=0)
 
     def save_values(self):
-        s = 'model_values' + self.tag + '.h5'
+        s = self.name + '.h5'
         try:
             os.remove(s)
         except:
