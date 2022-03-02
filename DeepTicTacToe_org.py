@@ -8,9 +8,20 @@ import keras.layers as Kl
 import keras.models as Km
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 BOARD_ROWS = BOARD_COLS = 3
 WINNING_LENGTH = 3
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        tf.config.experimental.set_virtual_device_configuration(
+            gpus[0],
+            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)]
+        )
+    except RuntimeError as e:
+        print(e)
 
 
 def get_winning_diagonals():
